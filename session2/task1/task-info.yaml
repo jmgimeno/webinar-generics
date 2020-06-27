@@ -1,0 +1,182 @@
+type: edu
+files:
+- name: Task.hs
+  visible: true
+  placeholders:
+  - offset: 344
+    length: 49
+    placeholder_text: undefined  -- generic implementation
+    initial_state:
+      length: 36
+      offset: 344
+    initialized_from_dependency: false
+    possible_answer: gneq (from x) (from y)
+    selected: true
+    status: Solved
+  - offset: 444
+    length: 18
+    placeholder_text: Bool  -- fix the type signature
+    initial_state:
+      length: 31
+      offset: 431
+    initialized_from_dependency: false
+    possible_answer: f a -> f a -> Bool
+    selected: true
+    status: Solved
+  - offset: 491
+    length: 16
+    placeholder_text: gneq = undefined
+    initial_state:
+      length: 16
+      offset: 491
+    initialized_from_dependency: false
+    possible_answer: gneq _ _ = False
+    selected: true
+    status: Solved
+  - offset: 519
+    length: 7
+    placeholder_text: '{- constraints -}'
+    initial_state:
+      length: 17
+      offset: 519
+    initialized_from_dependency: false
+    possible_answer: NotEq t
+    selected: true
+    status: Solved
+  - offset: 555
+    length: 28
+    placeholder_text: gneq = undefined
+    initial_state:
+      length: 16
+      offset: 565
+    initialized_from_dependency: false
+    possible_answer: gneq (K1 x) (K1 y) = neq x y
+    selected: true
+    status: Solved
+  - offset: 595
+    length: 18
+    placeholder_text: '{- constraints -}'
+    initial_state:
+      length: 17
+      offset: 593
+    initialized_from_dependency: false
+    possible_answer: GNotEq r, GNotEq s
+    selected: false
+    status: Solved
+  - offset: 664
+    length: 8
+    placeholder_text: undefined
+    initial_state:
+      length: 9
+      offset: 661
+    initialized_from_dependency: false
+    possible_answer: gneq x y
+    selected: true
+    status: Solved
+  - offset: 696
+    length: 8
+    placeholder_text: undefined
+    initial_state:
+      length: 9
+      offset: 694
+    initialized_from_dependency: false
+    possible_answer: gneq x y
+    selected: false
+    status: Solved
+  - offset: 728
+    length: 4
+    placeholder_text: undefined
+    initial_state:
+      length: 9
+      offset: 727
+    initialized_from_dependency: false
+    possible_answer: "True"
+    selected: true
+    status: Solved
+  - offset: 744
+    length: 18
+    placeholder_text: '{- constraints -}'
+    initial_state:
+      length: 17
+      offset: 748
+    initialized_from_dependency: false
+    possible_answer: GNotEq r, GNotEq s
+    selected: false
+    status: Solved
+  - offset: 823
+    length: 24
+    placeholder_text: undefined
+    initial_state:
+      length: 9
+      offset: 826
+    initialized_from_dependency: false
+    possible_answer: gneq x1 y1 || gneq x2 y2
+    selected: true
+    status: Solved
+  text: |-
+    {-# language DefaultSignatures,
+                 FlexibleContexts,
+                 FlexibleInstances,
+                 KindSignatures,
+                 TypeOperators #-}
+    module Task where
+
+    import Data.Kind
+    import GHC.Generics
+
+    class NotEq a where
+      neq :: a -> a -> Bool
+
+      default
+        neq :: (Generic a, GNotEq (Rep a))
+            => a -> a -> Bool
+      neq x y = undefined  -- generic implementation
+
+    class GNotEq (f :: Type -> Type) where
+      gneq :: Bool  -- fix the type signature
+
+    instance GNotEq U1 where
+      gneq = undefined
+
+    instance ({- constraints -}) => GNotEq (K1 i t) where
+      gneq = undefined
+
+    instance ({- constraints -}) => GNotEq (r :+: s) where
+      gneq (L1 x) (L1 y) = undefined
+      gneq (R1 x) (R1 y) = undefined
+      gneq _      _      = undefined
+
+    instance ({- constraints -}) => GNotEq (r :*: s) where
+      gneq (x1 :*: x2) (y1 :*: y2) = undefined
+
+    -- We'll talk about this in the next session
+    instance (GNotEq r) => GNotEq (M1 t m r) where
+      gneq (M1 x) (M1 y) = gneq x y
+
+    -- END OF FILE
+  learner_created: false
+- name: Test.hs
+  visible: false
+  text: |-
+    {-# language ScopedTypeVariables #-}
+    module Main (main) where
+
+    import Task
+    import Test.Hspec
+    import Test.Hspec.QuickCheck
+
+    instance NotEq Int where
+      neq = (/=)
+
+    instance NotEq a => NotEq [a]
+    instance NotEq a => NotEq (Maybe a)
+
+    main :: IO ()
+    main = hspec $ do
+      prop "check with [Int]" $
+        \(x :: [Int]) (y :: [Int]) -> (neq x y) == (x /= y)
+      prop "check with Maybe Int" $
+        \(x :: Maybe Int) (y :: Maybe Int) -> (neq x y) == (x /= y)
+  learner_created: false
+status: Solved
+record: -1

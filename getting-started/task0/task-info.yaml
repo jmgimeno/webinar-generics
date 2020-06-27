@@ -1,0 +1,39 @@
+type: edu
+files:
+- name: Task.hs
+  visible: true
+  placeholders:
+  - offset: 55
+    length: 23
+    placeholder_text: multiplyByTwo = undefined
+    initial_state:
+      length: 25
+      offset: 55
+    initialized_from_dependency: false
+    possible_answer: multiplyByTwo = (*2)
+    selected: true
+    status: Solved
+  text: |-
+    module Task where
+
+    multiplyByTwo :: Integer -> Integer
+    multiplyByTwo = undefined
+  learner_created: false
+- name: Test.hs
+  visible: false
+  text: |-
+    module Main (main) where
+
+    import Task
+    import Test.Hspec
+    import Test.Hspec.QuickCheck
+
+    main :: IO ()
+    main = hspec $ do
+      prop "should return an even number" $
+        \x -> even (multiplyByTwo x)
+      prop "should be the result of summing with itself" $
+        \x -> multiplyByTwo x == x + x
+  learner_created: false
+status: Solved
+record: -1

@@ -1,0 +1,135 @@
+type: edu
+files:
+- name: Task.hs
+  visible: true
+  placeholders:
+  - offset: 366
+    length: 21
+    placeholder_text: undefined
+    initial_state:
+      length: 9
+      offset: 366
+    initialized_from_dependency: false
+    possible_answer: map to (genumerate n)
+    selected: true
+    status: Solved
+  - offset: 774
+    length: 4
+    placeholder_text: undefined
+    initial_state:
+      length: 9
+      offset: 762
+    initialized_from_dependency: false
+    possible_answer: '[U1]'
+    selected: true
+    status: Solved
+  - offset: 1232
+    length: 59
+    placeholder_text: |-
+      -- rest of instances:
+      -- * K1 i t
+      -- * r :+: s
+      -- * r :*: s
+    initial_state:
+      length: 59
+      offset: 773
+    initialized_from_dependency: false
+    possible_answer: |-
+      instance Enumerate t => GEnumerate (K1 i t) where
+        genumerate n = map K1 (enumerate n)
+
+      instance (GEnumerate r, GEnumerate s) => GEnumerate (r :+: s) where
+        genumerate n = map L1 (genumerate n) ++ map R1 (genumerate n)
+
+      instance (GEnumerate r, GEnumerate s) => GEnumerate (r :*: s) where
+        genumerate n = [ x :*: y | (i,j) <- split n
+                                 , x <- genumerate i
+                                 , y <- genumerate j ]
+    selected: true
+    status: Solved
+  text: |-
+    {-# language DefaultSignatures,
+                 FlexibleContexts,
+                 FlexibleInstances,
+                 KindSignatures,
+                 TypeOperators #-}
+    module Task where
+
+    import Data.Kind
+    import GHC.Generics
+
+    class Enumerate a where
+      enumerate :: Int -> [a]
+
+      default
+        enumerate :: (Generic a, GEnumerate (Rep a))
+                  => Int -> [a]
+      enumerate n = undefined
+
+    instance Enumerate Int where
+      enumerate x = [0 .. x - 1]
+    instance Enumerate Bool where
+      enumerate n
+       | n <= 0    = []
+       | otherwise = [False, True]
+
+    class GEnumerate (f :: Type -> Type) where
+      genumerate :: Int -> [f a]
+
+    split :: Int -> [(Int, Int)]
+    split n = [ (i, n - i) | i <- [1 .. n - 1] ]
+
+    instance GEnumerate U1 where
+      genumerate n
+        | n <= 0    = []
+        | otherwise = undefined
+
+    -- rest of instances:
+    -- * K1 i t
+    -- * r :+: s
+    -- * r :*: s
+
+    -- We'll talk about this in the next session
+    instance (GEnumerate r) => GEnumerate (M1 t m r) where
+      genumerate n = map M1 (genumerate n)
+
+    -- END OF FILE
+  learner_created: false
+- name: Test.hs
+  visible: false
+  text: |-
+    module Main (main) where
+
+    import Task
+    import Test.Hspec
+    import Test.Hspec.QuickCheck
+    import Test.QuickCheck
+
+    instance Enumerate a => Enumerate (Maybe a)
+    instance Enumerate a => Enumerate [a]
+
+    enumerateMaybe :: Enumerate a => Int -> [Maybe a]
+    enumerateMaybe n
+      | n <= 0    = []
+      | otherwise = Nothing : map Just (enumerate n)
+
+    enumerateList :: Enumerate a => Int -> [[a]]
+    enumerateList n
+      | n <= 0    = []
+      | otherwise = [] : [ x : xs | (i, j) <- split n
+                                  , x <- enumerate i
+                                  , xs <- enumerateList j ]
+
+    main :: IO ()
+    main = hspec $ do
+      prop "works for Maybe Int" $
+        \n -> n >= 0 ==> enumerate n == (enumerateMaybe n :: [Maybe Int])
+      prop "works for Maybe Bool" $
+        \n -> n >= 0 ==> enumerate n == (enumerateMaybe n :: [Maybe Bool])
+      prop "works for [Int]" $
+        \n -> n >= 0 ==> let p = n `mod` 10 in enumerate p == (enumerateList p :: [[Int]])
+      prop "works for [Bool]" $
+        \n -> n >= 0 ==> let p = n `mod` 10 in enumerate p == (enumerateList p :: [[Bool]])
+  learner_created: false
+status: Solved
+record: -1

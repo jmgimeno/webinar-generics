@@ -1,0 +1,12 @@
+title: webinar-generics
+language: English
+summary: |-
+  "Introduction to Generic Programming"
+  by 47 Degrees Academy
+programming_language: Haskell
+content:
+- getting-started
+- session1
+- session2
+- session3
+mode: Study

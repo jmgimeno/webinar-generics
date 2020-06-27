@@ -1,0 +1,164 @@
+type: edu
+files:
+- name: Task.hs
+  visible: true
+  placeholders:
+  - offset: 417
+    length: 78
+    placeholder_text: Unit -- representation type
+    initial_state:
+      length: 27
+      offset: 417
+    initialized_from_dependency: false
+    possible_answer: |-
+      (Field (Maybe PlaceKind)
+                            `And` Field String
+                            `And` Field String)
+                           `Or` (Field Int)
+    selected: false
+    status: Solved
+  - offset: 557
+    length: 42
+    placeholder_text: undefined
+    initial_state:
+      length: 9
+      offset: 506
+    initialized_from_dependency: false
+    possible_answer: This (Field k `And` Field s `And` Field c)
+    selected: true
+    status: Solved
+  - offset: 623
+    length: 14
+    placeholder_text: undefined
+    initial_state:
+      length: 9
+      offset: 539
+    initialized_from_dependency: false
+    possible_answer: That (Field n)
+    selected: true
+    status: Solved
+  - offset: 672
+    length: 61
+    placeholder_text: to r = undefined
+    initial_state:
+      length: 16
+      offset: 583
+    initialized_from_dependency: false
+    possible_answer: |-
+      to (This (Field k `And` Field s `And` Field c))
+          = Place k s c
+        to (That (Field n))
+          = POBox n
+    selected: true
+    status: Solved
+  - offset: 825
+    length: 22
+    placeholder_text: Unit -- representation type
+    initial_state:
+      length: 27
+      offset: 657
+    initialized_from_dependency: false
+    possible_answer: Unit `Or` (Field String)
+    selected: false
+    status: Solved
+  - offset: 948
+    length: 0
+    placeholder_text: from pk = undefined
+    initial_state:
+      length: 19
+      offset: 725
+    initialized_from_dependency: false
+    possible_answer: |-
+      from Person      = This Unit
+        from (Company n) = That (Field n)
+    selected: true
+    status: Solved
+  - offset: 986
+    length: 57
+    placeholder_text: to r = undefined
+    initial_state:
+      length: 16
+      offset: 783
+    initialized_from_dependency: false
+    possible_answer: |-
+      to (This Unit)      = Person
+        to (That (Field n)) = Company n
+    selected: true
+    status: Solved
+  text: |-
+    {-# language InstanceSigs,
+                 TypeFamilies,
+                 TypeOperators #-}
+    module Task where
+
+    import Common
+
+    data Address
+      = Place { kind    :: Maybe PlaceKind
+              , street  :: String
+              , country :: String }
+      | POBox { number  :: Int }
+      deriving (Eq, Show)
+
+    data PlaceKind
+      = Person
+      | Company { name :: String }
+      deriving (Eq, Show)
+
+    instance Generic Address where
+      type Rep Address = Unit -- representation type
+
+      from :: Address -> Rep Address
+      from (Place k s c)
+        = undefined
+      from (POBox n)
+        = undefined
+
+      to :: Rep Address -> Address
+      to r = undefined
+
+    instance Generic PlaceKind where
+      type Rep PlaceKind = Unit -- representation type
+
+      from :: PlaceKind -> Rep PlaceKind
+      from pk = undefined
+
+      to :: Rep PlaceKind -> PlaceKind
+      to r = undefined
+
+    -- END OF FILE
+  learner_created: false
+- name: Test.hs
+  visible: false
+  text: |-
+    {-# language DeriveGeneric, ScopedTypeVariables, StandaloneDeriving #-}
+    module Main (main) where
+
+    import qualified GHC.Generics as GHC
+    import Common
+    import Task
+    import Test.Hspec
+    import Test.Hspec.QuickCheck
+    import Test.QuickCheck.Arbitrary.Generic
+
+    deriving instance GHC.Generic Address
+    deriving instance GHC.Generic PlaceKind
+
+    instance Arbitrary Address where
+      arbitrary = genericArbitrary
+    instance Arbitrary PlaceKind where
+      arbitrary = genericArbitrary
+
+    main :: IO ()
+    main = hspec $ do
+      prop "Place to generic" $
+        \k s c -> from (Place k s c) == This (Field k `And` Field s `And` Field c)
+      prop "Place from generic" $
+        \k s c -> Place k s c == to (This (Field k `And` Field s `And` Field c))
+      prop "Address to and from are inverses" $
+        \(a :: Address) -> to (from a) == a
+      prop "PlaceKind to and from are inverses" $
+        \(pk :: PlaceKind) -> to (from pk) == pk
+  learner_created: false
+status: Solved
+record: -1

@@ -1,0 +1,183 @@
+type: edu
+files:
+- name: Task.hs
+  visible: true
+  placeholders:
+  - offset: 503
+    length: 23
+    placeholder_text: undefined
+    initial_state:
+      length: 9
+      offset: 503
+    initialized_from_dependency: false
+    possible_answer: gget field (from whole)
+    selected: true
+    status: Solved
+  - offset: 764
+    length: 138
+    placeholder_text: |-
+      instance GGet field (repr1 :+: repr2) part where
+        gget field whole = undefined
+    initial_state:
+      length: 79
+      offset: 750
+    initialized_from_dependency: false
+    possible_answer: |-
+      instance (GGet field repr1 part, GGet field repr2 part)
+               => GGet field (repr1 :+: repr2) part where
+        gget field (L1 x) = gget field x
+        gget field (R1 y) = gget field y
+    selected: true
+    status: Solved
+  - offset: 941
+    length: 205
+    placeholder_text: |-
+      instance GGet field (D1 d repr) part where
+        gget field (M1 x) = undefined
+
+      instance GGet field (C1 c repr) part where
+        gget field (M1 x) = undefined
+    initial_state:
+      length: 150
+      offset: 831
+    initialized_from_dependency: false
+    possible_answer: |-
+      instance (GGet field repr part)
+               => GGet field (D1 d repr) part where
+        gget field (M1 x) = gget field x
+
+      instance (GGet field repr part)
+               => GGet field (C1 c repr) part where
+        gget field (M1 x) = gget field x
+    selected: true
+    status: Solved
+  - offset: 1465
+    length: 1
+    placeholder_text: undefined
+    initial_state:
+      length: 9
+      offset: 1300
+    initialized_from_dependency: false
+    possible_answer: x
+    selected: true
+    status: Solved
+  - offset: 1562
+    length: 20
+    placeholder_text: '{- constraint -}'
+    initial_state:
+      length: 16
+      offset: 1405
+    initialized_from_dependency: false
+    possible_answer: GGet field rest part
+    selected: true
+    status: Solved
+  - offset: 1637
+    length: 35
+    placeholder_text: gget field whole = undefined
+    initial_state:
+      length: 28
+      offset: 1476
+    initialized_from_dependency: false
+    possible_answer: 'gget field (_ :*: rest) = gget field rest'
+    selected: true
+    status: Solved
+  - offset: 1861
+    length: 46
+    placeholder_text: gget _ whole = undefined  -- similar to case (1)
+    initial_state:
+      length: 48
+      offset: 1693
+    initialized_from_dependency: false
+    possible_answer: gget _ (M1 (K1 x)) = x
+    selected: true
+    status: Solved
+  text: |-
+    {-# language DataKinds,
+                 DefaultSignatures,
+                 FlexibleContexts,
+                 FlexibleInstances,
+                 FunctionalDependencies,
+                 KindSignatures,
+                 PolyKinds,
+                 TypeFamilies,
+                 TypeOperators,
+                 UndecidableInstances #-}
+    module Task where
+
+    import Data.Kind
+    import Data.Proxy
+    import GHC.Generics
+    import GHC.TypeLits
+
+    get :: (Generic whole, GGet field (Rep whole) part)
+        => Proxy field -> whole -> part
+    get field whole = undefined
+
+    class GGet field repr part | repr field -> part where
+      gget :: Proxy field -> repr x -> part
+
+    -- we cannot write it due to the functional dependency
+    -- instance GGet field U1 part where
+    --   gget = error "this should never be called"
+
+    instance GGet field (repr1 :+: repr2) part where
+      gget field whole = undefined
+
+    instance GGet field (D1 d repr) part where
+      gget field (M1 x) = undefined
+
+    instance GGet field (C1 c repr) part where
+      gget field (M1 x) = undefined
+
+    -- The big trick: check a product in order
+    -- =======================================
+
+    -- 1. if the field name coincides, we have found it
+    --    { field :: part, ..rest }
+    instance {-# OVERLAPS #-}
+             GGet field (S1 ('MetaSel ('Just field) su ss ds) (K1 r part) :*: rest) part where
+      gget _ (M1 (K1 x) :*: _) = undefined
+
+    -- 2. otherwise, keep working
+    --    { other, ..rest }
+    instance {-# OVERLAPPABLE #-}
+             ({- constraint -})
+             => GGet field (other :*: rest) part where
+      gget field whole = undefined
+
+    -- 3. if we get to the end, it'd better be the field
+    --    { field :: part }
+    instance {-# OVERLAPS #-}
+             GGet field (S1 ('MetaSel ('Just field) su ss ds) (K1 r part)) part where
+      gget _ whole = undefined  -- similar to case (1)
+
+    -- END OF FILE
+  learner_created: false
+- name: Test.hs
+  visible: false
+  text: |-
+    {-# language DataKinds, DeriveGeneric, ScopedTypeVariables, TypeApplications #-}
+    module Main (main) where
+
+    import Data.Proxy
+    import qualified GHC.Generics as GHC
+    import Task
+    import Test.Hspec
+    import Test.Hspec.QuickCheck
+    import Test.QuickCheck.Arbitrary.Generic
+
+    data Person = Person { name :: String, age :: Int }
+                deriving (Show, GHC.Generic)
+
+    instance Arbitrary Person where
+      arbitrary = genericArbitrary
+
+    main :: IO ()
+    main = hspec $ do
+      prop "should return the name" $
+        \(p :: Person) -> get (Proxy @"name") p == name p
+      prop "should return the age" $
+          \(p :: Person) -> get (Proxy @"age") p == age p
+  learner_created: false
+status: Solved
+record: -1
